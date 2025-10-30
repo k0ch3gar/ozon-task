@@ -1,0 +1,79 @@
+type Query {
+    user(userId: ID!): User
+
+    listPosts(page: Int!): [Post!]
+    post(postId: ID!): Post
+
+    postComments(postId: ID!): [Comment!]
+    childComments(commentId: ID!): [Comment!]
+}
+
+type Mutation {
+    createUser(user: UserInput!): User
+
+    createPost(post: PostInput!): Post
+    updatePostTitle(body: String!): Post
+    updatePostBody(body: String!): Post
+    updatePostCommentsAllowance(allow: Boolean): Post
+    deletePost(postId: ID!): ID
+
+    createComment(comment: CommentInput!): Comment
+    updateCommentBody(body: String!): Comment
+    deleteComment(commentId: ID!): ID
+}
+
+type Subscription {
+    commentCreated: Comment
+    commentUpdated: Comment
+    commentDeleted: Comment
+}
+
+###########################################################################
+
+type Post {
+    id: ID!
+    authorId: ID
+    title: String!
+    body: String!
+    allowComments: Boolean!
+    commentsId: [ID]
+    createdAt: String!
+    deleted: Boolean!
+}
+
+type Comment {
+    id: ID!
+    authorId: ID
+    body: String!
+    parentCommentId: ID
+    createdAt: String!
+    deleted: Boolean!
+}
+
+type User {
+    id: ID!
+    username: String!
+    email: String!
+    createdAt: String!
+    deleted: Boolean!
+}
+
+###########################################################################
+
+input UserInput {
+    username: String!
+    email: String!
+    password: String!
+}
+
+input PostInput {
+    authorId: ID!
+    title: String!
+    body: String!
+}
+
+input CommentInput {
+    authorId: ID!
+    body: String!
+    parentCommentId: ID
+}

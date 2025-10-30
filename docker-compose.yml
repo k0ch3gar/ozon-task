@@ -1,0 +1,24 @@
+services:
+  postgres:
+    container_name: ozon-postgres
+    image: postgres:14.5
+    hostname: postgres
+    restart: unless-stopped
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${PG_DB}
+      - POSTGRES_PORT=${PG_PORT}
+      - POSTGRES_PASSWORD=${PG_USER}
+      - POSTGRES_USER=${PG_PASSWORD}
+    ports:
+      - "54239:5432"
+    networks:
+      - ozon-network
+
+volumes:
+  pg_data:
+
+networks:
+  ozon-network:
+    driver: bridge
