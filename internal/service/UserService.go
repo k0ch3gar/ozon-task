@@ -19,7 +19,7 @@ func NewUserService(us storage.UserStorage) *UserService {
 }
 
 func (us *UserService) GetUserById(ctx context.Context, userId string) (*model.User, error) {
-	user, err := us.us.GetUserById(userId)
+	user, err := us.us.GetUserById(userId, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (us *UserService) GetUserById(ctx context.Context, userId string) (*model.U
 
 func (us *UserService) CreateUser(ctx context.Context, userInput model.UserInput) (*model.User, error) {
 	user := utils.FromUserInput(&userInput)
-	err := us.us.InsertUser(user)
+	err := us.us.InsertUser(user, ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -18,8 +18,9 @@ func (r *mutationResolver) CreateUser(ctx context.Context, user model.UserInput)
 }
 
 // CreatePost is the resolver for the createPost field.
-func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: CreatePost - createPost"))
+func (r *mutationResolver) CreatePost(ctx context.Context, postInput model.PostInput) (*model.Post, error) {
+	post, err := r.ps.CreatePost(postInput, ctx)
+	return post, err
 }
 
 // UpdatePostTitle is the resolver for the updatePostTitle field.
@@ -65,12 +66,14 @@ func (r *queryResolver) User(ctx context.Context, userID string) (*model.User, e
 
 // ListPosts is the resolver for the listPosts field.
 func (r *queryResolver) ListPosts(ctx context.Context, page int32) ([]*model.Post, error) {
-	panic(fmt.Errorf("not implemented: ListPosts - listPosts"))
+	post, err := r.ps.GetPostsByPage(uint64(page), ctx)
+	return post, err
 }
 
 // Post is the resolver for the post field.
 func (r *queryResolver) Post(ctx context.Context, postID string) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: Post - post"))
+	post, err := r.ps.GetPostByid(postID, ctx)
+	return post, err
 }
 
 // PostComments is the resolver for the postComments field.

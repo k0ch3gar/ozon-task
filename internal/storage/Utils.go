@@ -14,18 +14,27 @@ func getShardIndex(key string, count uint64) uint64 {
 	return maphash.String(seed, key) % count
 }
 
-func getStorageShard[T any](shards []*T, shardCount uint64, id string) (*T, error) {
+func getStorageShardIdx[T any](shards []*T, shardCount uint64, id string) (uint64, error) {
 	idx := getShardIndex(id, shardCount)
 	if idx < 0 || idx >= shardCount {
-		return nil, errors.New("shard index out of range")
+		return 0, errors.New("shard index out of range")
 	}
 
 	uss := shards[idx]
 	if uss == nil {
-		return nil, errors.New("shard is nil")
+		return 0, errors.New("shard is nil")
 	}
 
-	return uss, nil
+	return idx, nil
+}
+
+func getDataByUniqueColumn(db *pg.DB, data interface{}, column string, value string, ctx context.Context) error {
+	query, err := buildQuery(db, data, ctx)
+	if err != nil {
+		return err
+	}
+
+	return query.Where(column+" = ?", value).Select()
 }
 
 func getDataById(db *pg.DB, data interface{}, ctx context.Context) error {

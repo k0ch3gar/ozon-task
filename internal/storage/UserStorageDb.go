@@ -9,45 +9,62 @@ import (
 	"github.com/k0ch3gar/ozon-task/internal/storage/model"
 )
 
-const (
-	ShardCount = 10
-)
-
 type UserStorageDb struct {
-	shards         []*StorageDbShard
-	insertionShard StorageDbShard
-	shardCount     uint64
+	mu sync.Mutex
+	db *pg.DB
 }
 
-func NewDbUserStorage(db *pg.DB) UserStorage {
-	shards := make([]*StorageDbShard, ShardCount)
-	for i := range shards {
-		shards[i] = &StorageDbShard{
-			db: db,
-			mu: sync.Mutex{},
+func (u *UserStorageDb) ContainsByUsername(username string, ctx context.Context) (bool, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
+	user := &model.User{
+		Username: username,
+	}
+	if err := getDataByUniqueColumn(u.db, user, "username", user.Username, ctx); err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return false, nil
+		} else {
+			return false, err
 		}
 	}
 
-	return &UserStorageDb{
-		shardCount:     ShardCount,
-		shards:         shards,
-		insertionShard: StorageDbShard{db: db, mu: sync.Mutex{}},
-	}
+	return true, nil
 }
 
-func (us *UserStorageDb) GetUserById(userId string, ctx context.Context) (*model.User, error) {
-	uss, err := getStorageShard(us.shards, us.shardCount, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	uss.mu.Lock()
-	defer uss.mu.Unlock()
+func (u *UserStorageDb) ContainsById(userId string, ctx context.Context) (bool, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
 
 	user := &model.User{
 		ID: userId,
 	}
-	if err := getDataById(uss.db, user, ctx); err != nil {
+	if err := getDataByUniqueColumn(u.db, user, "username", user.Username, ctx); err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
+func NewDbUserStorage(db *pg.DB) UserStorage {
+	return &UserStorageDb{
+		db: db,
+		mu: sync.Mutex{},
+	}
+}
+
+func (u *UserStorageDb) GetUserById(userId string, ctx context.Context) (*model.User, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
+	user := &model.User{
+		ID: userId,
+	}
+	if err := getDataById(u.db, user, ctx); err != nil {
 		return nil, err
 	}
 
@@ -58,23 +75,23 @@ func (us *UserStorageDb) GetUserById(userId string, ctx context.Context) (*model
 	return user, nil
 }
 
-func (us *UserStorageDb) InsertUser(user *model.User, ctx context.Context) error {
-	us.insertionShard.mu.Lock()
-	defer us.insertionShard.mu.Unlock()
+func (u *UserStorageDb) InsertUser(user *model.User, ctx context.Context) error {
+	u.mu.Lock()
+	defer u.mu.Unlock()
 
-	return insertData(us.insertionShard.db, user, ctx)
+	return insertData(u.db, user, ctx)
 }
 
-func (us *UserStorageDb) UpdateUser(newUser *model.User, ctx context.Context) error {
-	us.insertionShard.mu.Lock()
-	defer us.insertionShard.mu.Unlock()
+func (u *UserStorageDb) UpdateUser(newUser *model.User, ctx context.Context) error {
+	u.mu.Lock()
+	defer u.mu.Unlock()
 
-	return updateData(us.insertionShard.db, newUser, ctx)
+	return updateData(u.db, newUser, ctx)
 }
 
-func (us *UserStorageDb) DeleteUser(userId string, ctx context.Context) error {
-	us.insertionShard.mu.Lock()
-	defer us.insertionShard.mu.Unlock()
+func (u *UserStorageDb) DeleteUser(userId string, ctx context.Context) error {
+	u.mu.Lock()
+	defer u.mu.Unlock()
 
-	return deleteDataById(us.insertionShard.db, userId, ctx)
+	return deleteDataById(u.db, userId, ctx)
 }

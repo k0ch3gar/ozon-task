@@ -8,5 +8,5 @@ type Post struct {
 	AllowComments bool      `json:"allowComments"`
 	CommentsID    []*string `json:"commentsId,omitempty"`
 	CreatedAt     string    `json:"createdAt"`
-	DeletedAt     string    `json:"deletedAt"`
+	DeletedAt     *string   `json:"deletedAt"`
 }

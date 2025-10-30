@@ -18,11 +18,16 @@ type UserStorage interface {
 	InsertUser(user *model.User, ctx context.Context) error
 	UpdateUser(newUser *model.User, ctx context.Context) error
 	DeleteUser(userId string, ctx context.Context) error
+	ContainsByUsername(username string, ctx context.Context) (bool, error)
+	ContainsById(userId string, ctx context.Context) (bool, error)
 }
 
-type StorageDbShard struct {
-	mu sync.Mutex
-	db *pg.DB
+type PostStorage interface {
+	GetFirstPostsFrom(offset uint64, count uint64, ctx context.Context) ([]*model.Post, error)
+	GetPostById(postId string, ctx context.Context) (*model.Post, error)
+	InsertPost(post *model.Post, ctx context.Context) error
+	UpdatePost(newPost *model.Post, ctx context.Context) error
+	DeletePost(postId string, ctx context.Context) error
 }
 
 type StorageInMemoryShard[T any] struct {
@@ -44,7 +49,7 @@ func NewDbOpt() pg.Options {
 		Addr:     os.Getenv("PG_ADDR"),
 		User:     os.Getenv("PG_USER"),
 		Password: os.Getenv("PG_PASSWORD"),
-		Database: os.Getenv("PG_NAME"),
+		Database: os.Getenv("PG_DB"),
 	}
 }
 
@@ -56,6 +61,7 @@ func NewStorageModule(params config.ApplicationParameters) fx.Option {
 				NewDbOpt,
 				NewDbConnection,
 				NewDbUserStorage,
+				NewDbPostStorage,
 			),
 		)
 	} else {
@@ -63,6 +69,7 @@ func NewStorageModule(params config.ApplicationParameters) fx.Option {
 			`storage`,
 			fx.Provide(
 				NewInMemoryUserStorage,
+				NewInMemoryPostStorage,
 			),
 		)
 	}

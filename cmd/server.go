@@ -5,16 +5,13 @@ import (
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
-	"github.com/99designs/gqlgen/graphql/handler/lru"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/k0ch3gar/ozon-task/internal/config"
 	graph2 "github.com/k0ch3gar/ozon-task/internal/graph"
 	config2 "github.com/k0ch3gar/ozon-task/internal/graph/config"
+	handler2 "github.com/k0ch3gar/ozon-task/internal/handler"
 	"github.com/k0ch3gar/ozon-task/internal/service"
 	"github.com/k0ch3gar/ozon-task/internal/storage"
-	"github.com/vektah/gqlparser/v2/ast"
 	"go.uber.org/fx"
 )
 
@@ -28,31 +25,20 @@ func main() {
 		storage.NewStorageModule(params),
 		fx.Provide(
 			config2.NewResolverConfig,
-		),
-		fx.Provide(
 			service.NewUserService,
+			service.NewPostService,
 			graph2.NewResolver,
+			handler2.NewGraphQlServer,
 		),
-		fx.Invoke(func(config graph2.Config, params config.ApplicationParameters) {
+		fx.Invoke(func(srv *handler.Server, params config.ApplicationParameters) {
 			port := params.Port
 
-			srv := handler.New(graph2.NewExecutableSchema(config))
+			if params.Debug {
+				http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+				log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+			}
 
-			srv.AddTransport(transport.Options{})
-			srv.AddTransport(transport.GET{})
-			srv.AddTransport(transport.POST{})
-
-			srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
-
-			srv.Use(extension.Introspection{})
-			srv.Use(extension.AutomaticPersistedQuery{
-				Cache: lru.New[string](100),
-			})
-
-			http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 			http.Handle("/query", srv)
-
-			log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 			log.Fatal(http.ListenAndServe(":"+port, nil))
 		}),
 	).Run()

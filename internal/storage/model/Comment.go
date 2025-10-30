@@ -6,5 +6,5 @@ type Comment struct {
 	Body            string  `json:"body"`
 	ParentCommentID *string `json:"parentCommentId,omitempty"`
 	CreatedAt       string  `json:"createdAt"`
-	DeletedAt       string  `json:"deletedAt"`
+	DeletedAt       *string `json:"deletedAt"`
 }

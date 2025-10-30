@@ -10,10 +10,12 @@ import (
 
 type Resolver struct {
 	us *service.UserService
+	ps *service.PostService
 }
 
-func NewResolver(us *service.UserService) *Resolver {
+func NewResolver(us *service.UserService, ps *service.PostService) *Resolver {
 	return &Resolver{
 		us: us,
+		ps: ps,
 	}
 }

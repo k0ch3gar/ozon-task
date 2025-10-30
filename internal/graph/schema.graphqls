@@ -36,7 +36,6 @@ type Post {
     title: String!
     body: String!
     allowComments: Boolean!
-    commentsId: [ID]
     createdAt: String!
     deleted: Boolean!
 }
@@ -45,6 +44,7 @@ type Comment {
     id: ID!
     authorId: ID
     body: String!
+    parentPostId: ID!
     parentCommentId: ID
     createdAt: String!
     deleted: Boolean!

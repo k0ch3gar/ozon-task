@@ -11,6 +11,15 @@ type Comment struct {
 	Deleted         bool    `json:"deleted"`
 }
 
+var DeadComment = &Comment {
+	ID: "-1",
+	AuthorID: nil,
+	Body: "DELETED",
+	ParentCommentID: nil,
+	CreatedAt: "DELETED",
+	Deleted: true,
+}
+
 type CommentInput struct {
 	AuthorID        string  `json:"authorId"`
 	Body            string  `json:"body"`
@@ -31,6 +40,16 @@ type Post struct {
 	Deleted       bool      `json:"deleted"`
 }
 
+var DeadPost = &Post {
+	ID: "-1",
+	AuthorID: nil,
+	Title: "DELETED",
+	Body: "DELETED",
+	AllowComments: false,
+	CreatedAt: "DELETED",
+	Deleted: true,
+}
+
 type PostInput struct {
 	AuthorID string `json:"authorId"`
 	Title    string `json:"title"`
@@ -49,6 +68,14 @@ type User struct {
 	Email     string `json:"email"`
 	CreatedAt string `json:"createdAt"`
 	Deleted   bool   `json:"deleted"`
+}
+
+var DeadUser = &User {
+	ID: "-1",
+	Username: "DELETED",
+	Email: "DELETED",
+	CreatedAt: "DELETED",
+	Deleted: true,
 }
 
 type UserInput struct {
