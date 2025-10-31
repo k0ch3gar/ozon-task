@@ -44,12 +44,12 @@ func (c *CommentStorageDb) GetFirstCommentsByPost(postId string, offset, count u
 	defer c.mu.Unlock()
 
 	var comments []*model.Comment
-	query, err := buildQuery(c.db, comments, ctx)
+	query, err := buildQuery(c.db, &comments, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = query.Where("parent_post_id = ?", postId).Order("created_at").Limit(int(count)).Offset(int(offset)).Select()
+	err = query.Where("parent_comment_id = id").Where("parent_post_id = ?", postId).Where("deleted_at is null").Order("created_at").Limit(int(count)).Offset(int(offset)).Select()
 	if err != nil {
 		return nil, err
 	}
@@ -62,12 +62,12 @@ func (c *CommentStorageDb) GetFirstCommentsByComment(commentId string, offset, c
 	defer c.mu.Unlock()
 
 	var comments []*model.Comment
-	query, err := buildQuery(c.db, comments, ctx)
+	query, err := buildQuery(c.db, &comments, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = query.Where("parent_comment_id = ?", commentId).Order("created_at").Limit(int(count)).Offset(int(offset)).Select()
+	err = query.Where("parent_comment_id != id").Where("parent_comment_id = ?", commentId).Where("deleted_at is null").Order("created_at").Limit(int(count)).Offset(int(offset)).Select()
 	if err != nil {
 		return nil, err
 	}

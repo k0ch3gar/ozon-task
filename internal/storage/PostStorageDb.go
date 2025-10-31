@@ -26,12 +26,12 @@ func (p *PostStorageDb) GetFirstPostsFrom(offset uint64, count uint64, ctx conte
 	defer p.mu.Unlock()
 
 	var posts []*model.Post
-	query, err := buildQuery(p.db, posts, ctx)
+	query, err := buildQuery(p.db, &posts, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = query.Order("created_at").Limit(int(count)).Offset(int(offset)).Select()
+	err = query.Where("deleted_at is null").Order("created_at").Limit(int(count)).Offset(int(offset)).Select()
 	if err != nil {
 		return nil, err
 	}

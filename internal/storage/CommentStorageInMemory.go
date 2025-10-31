@@ -79,7 +79,7 @@ func (c *CommentStorageInMemory) GetFirstCommentsByPost(postId string, offset, c
 
 			var comments []*model.Comment
 			for _, val := range cs.data {
-				if val.ParentPostID != postId {
+				if val.ParentPostID != postId || val.ParentCommentID != nil {
 					continue
 				}
 
@@ -136,7 +136,7 @@ func (c *CommentStorageInMemory) GetFirstCommentsByComment(commentId string, off
 
 			var comments []*model.Comment
 			for _, val := range cs.data {
-				if val.ParentCommentID != nil && *val.ParentCommentID != commentId {
+				if val.ParentCommentID == nil || *val.ParentCommentID != commentId {
 					continue
 				}
 
