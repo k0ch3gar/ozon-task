@@ -82,18 +82,16 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		ChildComments func(childComplexity int, commentID string) int
+		ChildComments func(childComplexity int, page int32, commentID string) int
 		ListPosts     func(childComplexity int, page int32) int
 		Post          func(childComplexity int, postID string) int
-		PostComments  func(childComplexity int, postID string) int
+		PostComments  func(childComplexity int, page int32, postID string) int
 		UserByID      func(childComplexity int, userID string) int
 		UserByName    func(childComplexity int, username string) int
 	}
 
 	Subscription struct {
-		CommentCreated func(childComplexity int) int
-		CommentDeleted func(childComplexity int) int
-		CommentUpdated func(childComplexity int) int
+		CommentCreated func(childComplexity int, postID string) int
 	}
 
 	User struct {
@@ -122,13 +120,11 @@ type QueryResolver interface {
 	UserByName(ctx context.Context, username string) (*model.User, error)
 	ListPosts(ctx context.Context, page int32) ([]*model.Post, error)
 	Post(ctx context.Context, postID string) (*model.Post, error)
-	PostComments(ctx context.Context, postID string) ([]*model.Comment, error)
-	ChildComments(ctx context.Context, commentID string) ([]*model.Comment, error)
+	PostComments(ctx context.Context, page int32, postID string) ([]*model.Comment, error)
+	ChildComments(ctx context.Context, page int32, commentID string) ([]*model.Comment, error)
 }
 type SubscriptionResolver interface {
-	CommentCreated(ctx context.Context) (<-chan *model.Comment, error)
-	CommentUpdated(ctx context.Context) (<-chan *model.Comment, error)
-	CommentDeleted(ctx context.Context) (<-chan *model.Comment, error)
+	CommentCreated(ctx context.Context, postID string) (<-chan *model.Comment, error)
 }
 
 type executableSchema struct {
@@ -357,7 +353,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.ChildComments(childComplexity, args["commentId"].(string)), true
+		return e.complexity.Query.ChildComments(childComplexity, args["page"].(int32), args["commentId"].(string)), true
 	case "Query.listPosts":
 		if e.complexity.Query.ListPosts == nil {
 			break
@@ -390,7 +386,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.PostComments(childComplexity, args["postId"].(string)), true
+		return e.complexity.Query.PostComments(childComplexity, args["page"].(int32), args["postId"].(string)), true
 	case "Query.userById":
 		if e.complexity.Query.UserByID == nil {
 			break
@@ -419,19 +415,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		return e.complexity.Subscription.CommentCreated(childComplexity), true
-	case "Subscription.commentDeleted":
-		if e.complexity.Subscription.CommentDeleted == nil {
-			break
+		args, err := ec.field_Subscription_commentCreated_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
 		}
 
-		return e.complexity.Subscription.CommentDeleted(childComplexity), true
-	case "Subscription.commentUpdated":
-		if e.complexity.Subscription.CommentUpdated == nil {
-			break
-		}
-
-		return e.complexity.Subscription.CommentUpdated(childComplexity), true
+		return e.complexity.Subscription.CommentCreated(childComplexity, args["postId"].(string)), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -752,11 +741,16 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_childComments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "commentId", ec.unmarshalNID2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalNInt2int32)
 	if err != nil {
 		return nil, err
 	}
-	args["commentId"] = arg0
+	args["page"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "commentId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["commentId"] = arg1
 	return args, nil
 }
 
@@ -774,11 +768,16 @@ func (ec *executionContext) field_Query_listPosts_args(ctx context.Context, rawA
 func (ec *executionContext) field_Query_postComments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "postId", ec.unmarshalNID2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "page", ec.unmarshalNInt2int32)
 	if err != nil {
 		return nil, err
 	}
-	args["postId"] = arg0
+	args["page"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "postId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["postId"] = arg1
 	return args, nil
 }
 
@@ -812,6 +811,17 @@ func (ec *executionContext) field_Query_userByName_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["username"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_commentCreated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "postId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["postId"] = arg0
 	return args, nil
 }
 
@@ -2031,7 +2041,7 @@ func (ec *executionContext) _Query_postComments(ctx context.Context, field graph
 		ec.fieldContext_Query_postComments,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().PostComments(ctx, fc.Args["postId"].(string))
+			return ec.resolvers.Query().PostComments(ctx, fc.Args["page"].(int32), fc.Args["postId"].(string))
 		},
 		nil,
 		ec.marshalNComment2ᚕᚖgithubᚗcomᚋk0ch3garᚋozonᚑtaskᚋgraphᚋmodelᚐCommentᚄ,
@@ -2088,7 +2098,7 @@ func (ec *executionContext) _Query_childComments(ctx context.Context, field grap
 		ec.fieldContext_Query_childComments,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().ChildComments(ctx, fc.Args["commentId"].(string))
+			return ec.resolvers.Query().ChildComments(ctx, fc.Args["page"].(int32), fc.Args["commentId"].(string))
 		},
 		nil,
 		ec.marshalNComment2ᚕᚖgithubᚗcomᚋk0ch3garᚋozonᚑtaskᚋgraphᚋmodelᚐCommentᚄ,
@@ -2252,16 +2262,17 @@ func (ec *executionContext) _Subscription_commentCreated(ctx context.Context, fi
 		field,
 		ec.fieldContext_Subscription_commentCreated,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Subscription().CommentCreated(ctx)
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().CommentCreated(ctx, fc.Args["postId"].(string))
 		},
 		nil,
-		ec.marshalOComment2ᚖgithubᚗcomᚋk0ch3garᚋozonᚑtaskᚋgraphᚋmodelᚐComment,
+		ec.marshalNComment2ᚖgithubᚗcomᚋk0ch3garᚋozonᚑtaskᚋgraphᚋmodelᚐComment,
 		true,
-		false,
+		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Subscription_commentCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_commentCreated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -2287,95 +2298,16 @@ func (ec *executionContext) fieldContext_Subscription_commentCreated(_ context.C
 			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
 		},
 	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Subscription_commentUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	return graphql.ResolveFieldStream(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Subscription_commentUpdated,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Subscription().CommentUpdated(ctx)
-		},
-		nil,
-		ec.marshalOComment2ᚖgithubᚗcomᚋk0ch3garᚋozonᚑtaskᚋgraphᚋmodelᚐComment,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Subscription_commentUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Comment_id(ctx, field)
-			case "authorId":
-				return ec.fieldContext_Comment_authorId(ctx, field)
-			case "body":
-				return ec.fieldContext_Comment_body(ctx, field)
-			case "parentPostId":
-				return ec.fieldContext_Comment_parentPostId(ctx, field)
-			case "parentCommentId":
-				return ec.fieldContext_Comment_parentCommentId(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Comment_createdAt(ctx, field)
-			case "deleted":
-				return ec.fieldContext_Comment_deleted(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Subscription_commentDeleted(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	return graphql.ResolveFieldStream(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Subscription_commentDeleted,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Subscription().CommentDeleted(ctx)
-		},
-		nil,
-		ec.marshalOComment2ᚖgithubᚗcomᚋk0ch3garᚋozonᚑtaskᚋgraphᚋmodelᚐComment,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Subscription_commentDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Comment_id(ctx, field)
-			case "authorId":
-				return ec.fieldContext_Comment_authorId(ctx, field)
-			case "body":
-				return ec.fieldContext_Comment_body(ctx, field)
-			case "parentPostId":
-				return ec.fieldContext_Comment_parentPostId(ctx, field)
-			case "parentCommentId":
-				return ec.fieldContext_Comment_parentCommentId(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Comment_createdAt(ctx, field)
-			case "deleted":
-				return ec.fieldContext_Comment_deleted(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
-		},
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_commentCreated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -4508,10 +4440,6 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	switch fields[0].Name {
 	case "commentCreated":
 		return ec._Subscription_commentCreated(ctx, fields[0])
-	case "commentUpdated":
-		return ec._Subscription_commentUpdated(ctx, fields[0])
-	case "commentDeleted":
-		return ec._Subscription_commentDeleted(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -4925,6 +4853,10 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNComment2githubᚗcomᚋk0ch3garᚋozonᚑtaskᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v model.Comment) graphql.Marshaler {
+	return ec._Comment(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNComment2ᚕᚖgithubᚗcomᚋk0ch3garᚋozonᚑtaskᚋgraphᚋmodelᚐCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {

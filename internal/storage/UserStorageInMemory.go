@@ -97,6 +97,10 @@ func (us *UserStorageInMemory) ContainsById(userId string, ctx context.Context) 
 	defer uss.mu.Unlock()
 
 	_, ok := uss.data[userId]
+	if !ok {
+		return false, nil
+	}
+	
 	if err = us.ValidateUserExistence(uss.data[userId]); err != nil {
 		return false, err
 	}

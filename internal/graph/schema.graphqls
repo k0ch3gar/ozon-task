@@ -5,8 +5,8 @@ type Query {
     listPosts(page: Int!): [Post!]!
     post(postId: ID!): Post
 
-    postComments(postId: ID!): [Comment!]!
-    childComments(commentId: ID!): [Comment!]!
+    postComments(page: Int!, postId: ID!): [Comment!]!
+    childComments(page: Int!, commentId: ID!): [Comment!]!
 }
 
 type Mutation {
@@ -25,9 +25,7 @@ type Mutation {
 }
 
 type Subscription {
-    commentCreated: Comment
-    commentUpdated: Comment
-    commentDeleted: Comment
+    commentCreated(postId: ID!): Comment!
 }
 
 ###########################################################################

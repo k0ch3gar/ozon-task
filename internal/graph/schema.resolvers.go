@@ -31,7 +31,12 @@ func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*stri
 
 // CreateComment is the resolver for the createComment field.
 func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: CreateComment - createComment"))
+	com, err := r.cs.CreateComment(comment, ctx)
+	if err == nil {
+		r.ss.PubComment(com.ParentPostID, com)
+	}
+
+	return com, err
 }
 
 // DeleteComment is the resolver for the deleteComment field.
@@ -81,13 +86,13 @@ func (r *queryResolver) Post(ctx context.Context, postID string) (*model.Post, e
 }
 
 // PostComments is the resolver for the postComments field.
-func (r *queryResolver) PostComments(ctx context.Context, postID string) ([]*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: PostComments - postComments"))
+func (r *queryResolver) PostComments(ctx context.Context, page int32, postID string) ([]*model.Comment, error) {
+	return r.cs.GetPostCommentsByPage(postID, uint64(page), ctx)
 }
 
 // ChildComments is the resolver for the childComments field.
-func (r *queryResolver) ChildComments(ctx context.Context, commentID string) ([]*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: ChildComments - childComments"))
+func (r *queryResolver) ChildComments(ctx context.Context, page int32, commentID string) ([]*model.Comment, error) {
+	return r.cs.GetChildCommentsByPage(commentID, uint64(page), ctx)
 }
 
 func (r *queryResolver) UserByID(ctx context.Context, userID string) (*model.User, error) {
@@ -101,18 +106,22 @@ func (r *queryResolver) UserByName(ctx context.Context, username string) (*model
 }
 
 // CommentCreated is the resolver for the commentCreated field.
-func (r *subscriptionResolver) CommentCreated(ctx context.Context) (<-chan *model.Comment, error) {
-	panic(fmt.Errorf("not implemented: CommentCreated - commentCreated"))
-}
+func (r *subscriptionResolver) CommentCreated(ctx context.Context, postId string) (<-chan *model.Comment, error) {
+	comments := make(chan *model.Comment, 4)
 
-// CommentUpdated is the resolver for the commentUpdated field.
-func (r *subscriptionResolver) CommentUpdated(ctx context.Context) (<-chan *model.Comment, error) {
-	panic(fmt.Errorf("not implemented: CommentUpdated - commentUpdated"))
-}
+	go func() {
+		defer r.ss.Unsubscribe(postId, comments)
+		r.ss.Subscribe(postId, comments)
 
-// CommentDeleted is the resolver for the commentDeleted field.
-func (r *subscriptionResolver) CommentDeleted(ctx context.Context) (<-chan *model.Comment, error) {
-	panic(fmt.Errorf("not implemented: CommentDeleted - commentDeleted"))
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return comments, nil
 }
 
 // Mutation returns MutationResolver implementation.

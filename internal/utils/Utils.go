@@ -80,3 +80,35 @@ func FromPostInput(postInput *model2.PostInput) *model.Post {
 		AllowComments: true,
 	}
 }
+
+func FromStorageComment(comment *model.Comment) *model2.Comment {
+	return &model2.Comment{
+		ID:              comment.ID,
+		AuthorID:        comment.AuthorID,
+		ParentPostID:    comment.ParentPostID,
+		ParentCommentID: comment.ParentCommentID,
+		Body:            comment.Body,
+		CreatedAt:       comment.CreatedAt,
+		Deleted:         comment.DeletedAt != nil,
+	}
+}
+
+func FromApiComment(comment *model2.Comment) *model.Comment {
+	return &model.Comment{
+		ID:              comment.ID,
+		AuthorID:        comment.AuthorID,
+		ParentPostID:    comment.ParentPostID,
+		ParentCommentID: comment.ParentCommentID,
+		Body:            comment.Body,
+		CreatedAt:       comment.CreatedAt,
+	}
+}
+
+func FromCommentInput(comment *model2.CommentInput) *model.Comment {
+	return &model.Comment{
+		AuthorID:        &comment.AuthorID,
+		ParentPostID:    comment.ParentPostID,
+		ParentCommentID: comment.ParentCommentID,
+		Body:            comment.Body,
+	}
+}

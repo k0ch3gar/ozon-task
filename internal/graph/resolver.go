@@ -11,11 +11,20 @@ import (
 type Resolver struct {
 	us *service.UserService
 	ps *service.PostService
+	cs *service.CommentService
+	ss *service.SubscriptionService
 }
 
-func NewResolver(us *service.UserService, ps *service.PostService) *Resolver {
+func NewResolver(
+	us *service.UserService,
+	ps *service.PostService,
+	cs *service.CommentService,
+	ss *service.SubscriptionService,
+) *Resolver {
 	return &Resolver{
 		us: us,
 		ps: ps,
+		cs: cs,
+		ss: ss,
 	}
 }

@@ -25,8 +25,10 @@ func main() {
 		storage.NewStorageModule(params),
 		fx.Provide(
 			config2.NewResolverConfig,
+			service.NewSubscriptionService,
 			service.NewUserService,
 			service.NewPostService,
+			service.NewCommentService,
 			graph2.NewResolver,
 			handler2.NewGraphQlServer,
 		),
