@@ -101,12 +101,12 @@ func (c *CommentStorageInMemory) GetFirstCommentsByPost(postId string, offset, c
 			panic(err)
 		}
 
-		t2, _ := time.Parse(time.RFC3339, allComments[i].CreatedAt)
+		t2, _ := time.Parse(time.RFC3339, allComments[j].CreatedAt)
 		if err != nil {
 			panic(err)
 		}
 
-		return t1.After(t2)
+		return t1.Before(t2)
 	})
 
 	if offset >= uint64(len(allComments)) {
@@ -158,12 +158,12 @@ func (c *CommentStorageInMemory) GetFirstCommentsByComment(commentId string, off
 			panic(err)
 		}
 
-		t2, _ := time.Parse(time.RFC3339, allComments[i].CreatedAt)
+		t2, _ := time.Parse(time.RFC3339, allComments[j].CreatedAt)
 		if err != nil {
 			panic(err)
 		}
 
-		return t1.After(t2)
+		return t1.Before(t2)
 	})
 
 	if offset >= uint64(len(allComments)) {
