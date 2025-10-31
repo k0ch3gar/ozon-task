@@ -1,24 +1,26 @@
 type Query {
-    user(userId: ID!): User
+    userById(userId: ID!): User
+    userByName(username: String!): User
 
-    listPosts(page: Int!): [Post!]
+    listPosts(page: Int!): [Post!]!
     post(postId: ID!): Post
 
-    postComments(postId: ID!): [Comment!]
-    childComments(commentId: ID!): [Comment!]
+    postComments(postId: ID!): [Comment!]!
+    childComments(commentId: ID!): [Comment!]!
 }
 
 type Mutation {
     createUser(user: UserInput!): User
+    deleteUser(userId: ID!): User
 
     createPost(post: PostInput!): Post
-    updatePostTitle(body: String!): Post
-    updatePostBody(body: String!): Post
-    updatePostCommentsAllowance(allow: Boolean): Post
+    updatePostTitle(postId: ID!, title: String!): Post
+    updatePostBody(postId: ID!, body: String!): Post
+    updatePostCommentsAllowance(postId: ID!, allow: Boolean): Post
     deletePost(postId: ID!): ID
 
     createComment(comment: CommentInput!): Comment
-    updateCommentBody(body: String!): Comment
+    updateCommentBody(commentId: ID!, body: String!): Comment
     deleteComment(commentId: ID!): ID
 }
 
@@ -75,5 +77,6 @@ input PostInput {
 input CommentInput {
     authorId: ID!
     body: String!
+    parentPostId: ID!
     parentCommentId: ID
 }

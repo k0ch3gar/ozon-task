@@ -23,24 +23,9 @@ func (r *mutationResolver) CreatePost(ctx context.Context, postInput model.PostI
 	return post, err
 }
 
-// UpdatePostTitle is the resolver for the updatePostTitle field.
-func (r *mutationResolver) UpdatePostTitle(ctx context.Context, body string) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: UpdatePostTitle - updatePostTitle"))
-}
-
-// UpdatePostBody is the resolver for the updatePostBody field.
-func (r *mutationResolver) UpdatePostBody(ctx context.Context, body string) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: UpdatePostBody - updatePostBody"))
-}
-
-// UpdatePostCommentsAllowance is the resolver for the updatePostCommentsAllowance field.
-func (r *mutationResolver) UpdatePostCommentsAllowance(ctx context.Context, allow *bool) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: UpdatePostCommentsAllowance - updatePostCommentsAllowance"))
-}
-
 // DeletePost is the resolver for the deletePost field.
 func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*string, error) {
-	panic(fmt.Errorf("not implemented: DeletePost - deletePost"))
+	return r.ps.DeletePost(ctx, postID)
 }
 
 // CreateComment is the resolver for the createComment field.
@@ -48,20 +33,34 @@ func (r *mutationResolver) CreateComment(ctx context.Context, comment model.Comm
 	panic(fmt.Errorf("not implemented: CreateComment - createComment"))
 }
 
-// UpdateCommentBody is the resolver for the updateCommentBody field.
-func (r *mutationResolver) UpdateCommentBody(ctx context.Context, body string) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: UpdateCommentBody - updateCommentBody"))
-}
-
 // DeleteComment is the resolver for the deleteComment field.
 func (r *mutationResolver) DeleteComment(ctx context.Context, commentID string) (*string, error) {
 	panic(fmt.Errorf("not implemented: DeleteComment - deleteComment"))
 }
 
-// User is the resolver for the user field.
-func (r *queryResolver) User(ctx context.Context, userID string) (*model.User, error) {
-	usr, err := r.us.GetUserById(ctx, userID)
-	return usr, err
+func (r *mutationResolver) DeleteUser(ctx context.Context, userID string) (*model.User, error) {
+	return r.us.DeleteUser(ctx, userID)
+}
+
+func (r *mutationResolver) UpdatePostTitle(ctx context.Context, postID string, title string) (*model.Post, error) {
+	return r.ps.UpdatePostTitle(ctx, postID, title)
+}
+
+func (r *mutationResolver) UpdatePostBody(ctx context.Context, postID string, body string) (*model.Post, error) {
+	return r.ps.UpdatePostBody(ctx, postID, body)
+}
+
+func (r *mutationResolver) UpdatePostCommentsAllowance(ctx context.Context, postID string, allow *bool) (*model.Post, error) {
+	if allow == nil {
+		return nil, nil
+	}
+
+	return r.ps.UpdatePostCommentsAllowance(ctx, postID, *allow)
+}
+
+func (r *mutationResolver) UpdateCommentBody(ctx context.Context, commentID string, body string) (*model.Comment, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // ListPosts is the resolver for the listPosts field.
@@ -84,6 +83,16 @@ func (r *queryResolver) PostComments(ctx context.Context, postID string) ([]*mod
 // ChildComments is the resolver for the childComments field.
 func (r *queryResolver) ChildComments(ctx context.Context, commentID string) ([]*model.Comment, error) {
 	panic(fmt.Errorf("not implemented: ChildComments - childComments"))
+}
+
+func (r *queryResolver) UserByID(ctx context.Context, userID string) (*model.User, error) {
+	usr, err := r.us.GetUserById(ctx, userID)
+	return usr, err
+}
+
+func (r *queryResolver) UserByName(ctx context.Context, username string) (*model.User, error) {
+	usr, err := r.us.GetUserByName(ctx, username)
+	return usr, err
 }
 
 // CommentCreated is the resolver for the commentCreated field.
@@ -111,5 +120,7 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
 type mutationResolver struct{ *Resolver }
+
 type queryResolver struct{ *Resolver }
+
 type subscriptionResolver struct{ *Resolver }

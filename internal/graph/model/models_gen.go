@@ -6,9 +6,17 @@ type Comment struct {
 	ID              string  `json:"id"`
 	AuthorID        *string `json:"authorId,omitempty"`
 	Body            string  `json:"body"`
+	ParentPostID    string  `json:"parentPostId"`
 	ParentCommentID *string `json:"parentCommentId,omitempty"`
 	CreatedAt       string  `json:"createdAt"`
 	Deleted         bool    `json:"deleted"`
+}
+
+type CommentInput struct {
+	AuthorID        string  `json:"authorId"`
+	Body            string  `json:"body"`
+	ParentPostID    string  `json:"parentPostId"`
+	ParentCommentID *string `json:"parentCommentId,omitempty"`
 }
 
 var DeadComment = &Comment {
@@ -18,12 +26,6 @@ var DeadComment = &Comment {
 	ParentCommentID: nil,
 	CreatedAt: "DELETED",
 	Deleted: true,
-}
-
-type CommentInput struct {
-	AuthorID        string  `json:"authorId"`
-	Body            string  `json:"body"`
-	ParentCommentID *string `json:"parentCommentId,omitempty"`
 }
 
 type Mutation struct {

@@ -24,7 +24,7 @@ func (us *UserService) GetUserById(ctx context.Context, userId string) (*model.U
 		return nil, err
 	}
 
-	return utils.FromDbUser(user), err
+	return utils.FromStorageUser(user), err
 }
 
 func (us *UserService) CreateUser(ctx context.Context, userInput model.UserInput) (*model.User, error) {
@@ -34,5 +34,23 @@ func (us *UserService) CreateUser(ctx context.Context, userInput model.UserInput
 		return nil, err
 	}
 
-	return utils.FromDbUser(user), err
+	return utils.FromStorageUser(user), err
+}
+
+func (us *UserService) GetUserByName(ctx context.Context, username string) (*model.User, error) {
+	user, err := us.us.GetUserByName(username, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.FromStorageUser(user), err
+}
+
+func (us *UserService) DeleteUser(ctx context.Context, userId string) (*model.User, error) {
+	err := us.us.DeleteUser(userId, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return us.GetUserById(ctx, userId)
 }

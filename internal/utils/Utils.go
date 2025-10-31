@@ -5,7 +5,7 @@ import (
 	"github.com/k0ch3gar/ozon-task/internal/storage/model"
 )
 
-func FromDbUser(user *model.User) *model2.User {
+func FromStorageUser(user *model.User) *model2.User {
 	if user.DeletedAt == nil {
 		return &model2.User{
 			ID:        user.ID,
@@ -49,6 +49,7 @@ func FromDbPost(post *model.Post) *model2.Post {
 			Body:          post.Body,
 			AuthorID:      post.AuthorID,
 			AllowComments: post.AllowComments,
+			CreatedAt:     post.CreatedAt,
 		}
 	}
 
@@ -62,6 +63,7 @@ func FromApiPost(post *model2.Post) *model.Post {
 		Body:          post.Body,
 		AuthorID:      post.AuthorID,
 		AllowComments: post.AllowComments,
+		CreatedAt:     post.CreatedAt,
 	}
 }
 

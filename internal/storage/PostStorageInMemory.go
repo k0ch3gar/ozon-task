@@ -46,7 +46,8 @@ func (p *PostStorageInMemory) GetFirstPostsFrom(offset uint64, count uint64, ctx
 
 			ps.mu.Lock()
 			defer ps.mu.Unlock()
-			posts := make([]*model.Post, len(ps.data))
+
+			var posts []*model.Post
 			for _, val := range ps.data {
 				posts = append(posts, val)
 			}
@@ -60,7 +61,18 @@ func (p *PostStorageInMemory) GetFirstPostsFrom(offset uint64, count uint64, ctx
 	wg.Wait()
 
 	sort.Slice(allPosts, func(i, j int) bool {
-		return allPosts[i].CreatedAt > allPosts[j].CreatedAt
+
+		t1, err := time.Parse(time.RFC3339, allPosts[i].CreatedAt)
+		if err != nil {
+			panic(err)
+		}
+
+		t2, _ := time.Parse(time.RFC3339, allPosts[i].CreatedAt)
+		if err != nil {
+			panic(err)
+		}
+
+		return t1.After(t2)
 	})
 
 	if offset >= uint64(len(allPosts)) {
@@ -90,6 +102,10 @@ func (p *PostStorageInMemory) GetPostById(postId string, ctx context.Context) (*
 		return nil, errors.New("no such post")
 	}
 
+	if err = p.ValidatePostExistence(ps.data[postId]); err != nil {
+		return nil, err
+	}
+
 	return post, nil
 }
 
@@ -110,7 +126,7 @@ func (p *PostStorageInMemory) InsertPost(post *model.Post, ctx context.Context) 
 	}
 
 	post.ID = id
-	post.CreatedAt = time.Now().String()
+	post.CreatedAt = time.Now().Format(time.RFC3339)
 
 	ps.data[id] = post
 	p.lastId++
@@ -132,7 +148,19 @@ func (p *PostStorageInMemory) UpdatePost(newPost *model.Post, ctx context.Contex
 		return errors.New(fmt.Sprintf("no such post with id: %s", newPost.ID))
 	}
 
+	if err = p.ValidatePostExistence(ps.data[newPost.ID]); err != nil {
+		return err
+	}
+
 	ps.data[newPost.ID] = newPost
+	return nil
+}
+
+func (p *PostStorageInMemory) ValidatePostExistence(post *model.Post) error {
+	if post.DeletedAt != nil {
+		return errors.New(fmt.Sprintf("post with this id is deleted: %s", post.ID))
+	}
+
 	return nil
 }
 
@@ -151,6 +179,11 @@ func (p *PostStorageInMemory) DeletePost(postId string, ctx context.Context) err
 		return errors.New(fmt.Sprintf("no such post with id: %s", postId))
 	}
 
-	delete(ps.data, postId)
+	if ps.data[postId].DeletedAt != nil {
+		return errors.New(fmt.Sprintf("post with this id is already deleted: %s", postId))
+	}
+
+	deletionTime := time.Now().Format(time.RFC3339)
+	ps.data[postId].DeletedAt = &deletionTime
 	return nil
 }

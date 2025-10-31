@@ -14,6 +14,24 @@ type UserStorageDb struct {
 	db *pg.DB
 }
 
+func (u *UserStorageDb) GetUserByName(username string, ctx context.Context) (*model.User, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
+	user := &model.User{
+		Username: username,
+	}
+	if err := getDataByUniqueColumn(u.db, user, "username", username, ctx); err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, errors.New("no such user")
+		} else {
+			return nil, err
+		}
+	}
+
+	return user, nil
+}
+
 func (u *UserStorageDb) ContainsByUsername(username string, ctx context.Context) (bool, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -65,11 +83,11 @@ func (u *UserStorageDb) GetUserById(userId string, ctx context.Context) (*model.
 		ID: userId,
 	}
 	if err := getDataById(u.db, user, ctx); err != nil {
-		return nil, err
-	}
-
-	if user == nil {
-		return nil, errors.New("no such user")
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, errors.New("no such user")
+		} else {
+			return nil, err
+		}
 	}
 
 	return user, nil

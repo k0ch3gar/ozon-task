@@ -31,6 +31,10 @@ func (ps *PostService) GetPostsByPage(page uint64, ctx context.Context) ([]*mode
 		return nil, err
 	}
 
+	if len(posts) == 0 {
+		return nil, nil
+	}
+
 	apiPosts := make([]*model.Post, len(posts))
 	for i := range apiPosts {
 		apiPosts[i] = utils.FromDbPost(posts[i])
@@ -62,4 +66,58 @@ func (ps *PostService) CreatePost(postInput model.PostInput, ctx context.Context
 	}
 
 	return utils.FromDbPost(post), err
+}
+
+func (ps *PostService) UpdatePostTitle(ctx context.Context, postID string, title string) (*model.Post, error) {
+	post, err := ps.GetPostByid(postID, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	post.Title = title
+	err = ps.p.UpdatePost(utils.FromApiPost(post), ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+func (ps *PostService) UpdatePostBody(ctx context.Context, postID string, body string) (*model.Post, error) {
+	post, err := ps.GetPostByid(postID, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	post.Body = body
+	err = ps.p.UpdatePost(utils.FromApiPost(post), ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+func (ps *PostService) UpdatePostCommentsAllowance(ctx context.Context, postID string, allow bool) (*model.Post, error) {
+	post, err := ps.GetPostByid(postID, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	post.AllowComments = allow
+	err = ps.p.UpdatePost(utils.FromApiPost(post), ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+func (ps *PostService) DeletePost(ctx context.Context, postID string) (*string, error) {
+	err := ps.p.DeletePost(postID, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &postID, nil
 }
