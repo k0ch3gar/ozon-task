@@ -15,6 +15,44 @@ services:
       - "54239:5432"
     networks:
       - ozon-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./db/migrations:/migrations
+    command: [
+      "-path", "/migrations",
+      "-database", "postgres://postgres:postgres@postgres:5432/ozon?sslmode=disable",
+      "up"
+    ]
+    networks:
+      - ozon-network
+
+  ozon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ozon
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PG_ADDR: ${PG_ADDR}
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_DB: ${PG_DB}
+    ports:
+      - "8080:8080"
+    networks:
+      - ozon-network
+
 
 volumes:
   pg_data:
