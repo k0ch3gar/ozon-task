@@ -31,6 +31,15 @@ type PostStorage interface {
 	DeletePost(postId string, ctx context.Context) error
 }
 
+type CommentStorage interface {
+	GetCommentById(commentId string, ctx context.Context) (*model.Comment, error)
+	GetFirstCommentsByPost(postId string, offset, count uint64, ctx context.Context) ([]*model.Comment, error)
+	GetFirstCommentsByComment(commentId string, offset, count uint64, ctx context.Context) ([]*model.Comment, error)
+	InsertComment(comment *model.Comment, ctx context.Context) error
+	UpdateComment(newComment *model.Comment, ctx context.Context) error
+	DeleteComment(commentId string, ctx context.Context) error
+}
+
 type StorageInMemoryShard[T any] struct {
 	mu   sync.Mutex
 	data map[string]*T
