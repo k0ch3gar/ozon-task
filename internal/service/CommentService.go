@@ -13,20 +13,17 @@ import (
 
 type CommentService struct {
 	u        storage.UserStorage
-	p        storage.PostStorage
 	c        storage.CommentStorage
 	pageSize uint64
 }
 
 func NewCommentService(
 	u storage.UserStorage,
-	p storage.PostStorage,
 	c storage.CommentStorage,
 	params config.ApplicationParameters,
 ) *CommentService {
 	return &CommentService{
 		u:        u,
-		p:        p,
 		c:        c,
 		pageSize: params.PageSize,
 	}

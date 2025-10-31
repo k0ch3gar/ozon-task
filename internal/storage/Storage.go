@@ -64,7 +64,7 @@ func NewDbOpt() pg.Options {
 }
 
 func NewStorageModule(params config.ApplicationParameters) fx.Option {
-	if params.StorageType {
+	if params.PersistentStorageType {
 		return fx.Module(
 			`storage`,
 			fx.Provide(
