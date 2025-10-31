@@ -72,6 +72,7 @@ func NewStorageModule(params config.ApplicationParameters) fx.Option {
 				NewDbConnection,
 				NewDbUserStorage,
 				NewDbPostStorage,
+				NewDbCommentStorage,
 			),
 		)
 	} else {
@@ -80,6 +81,7 @@ func NewStorageModule(params config.ApplicationParameters) fx.Option {
 			fx.Provide(
 				NewInMemoryUserStorage,
 				NewInMemoryPostStorage,
+				NewInMemoryCommentStorage,
 			),
 		)
 	}

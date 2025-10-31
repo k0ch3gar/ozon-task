@@ -67,12 +67,12 @@ func (p *PostStorageInMemory) GetFirstPostsFrom(offset uint64, count uint64, ctx
 			panic(err)
 		}
 
-		t2, _ := time.Parse(time.RFC3339, allPosts[i].CreatedAt)
+		t2, _ := time.Parse(time.RFC3339, allPosts[j].CreatedAt)
 		if err != nil {
 			panic(err)
 		}
 
-		return t1.After(t2)
+		return t1.Before(t2)
 	})
 
 	if offset >= uint64(len(allPosts)) {

@@ -53,7 +53,12 @@ func FromDbPost(post *model.Post) *model2.Post {
 		}
 	}
 
-	return model2.DeadPost
+	dead := model2.DeadPost
+	dead.ID = post.ID
+	dead.CreatedAt = post.CreatedAt
+	dead.Deleted = true
+
+	return dead
 }
 
 func FromApiPost(post *model2.Post) *model.Post {
