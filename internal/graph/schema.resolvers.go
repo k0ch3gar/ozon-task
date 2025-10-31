@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/k0ch3gar/ozon-task/internal/graph/model"
@@ -41,7 +40,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, comment model.Comm
 
 // DeleteComment is the resolver for the deleteComment field.
 func (r *mutationResolver) DeleteComment(ctx context.Context, commentID string) (*string, error) {
-	panic(fmt.Errorf("not implemented: DeleteComment - deleteComment"))
+	return r.cs.DeleteComment(commentID, ctx)
 }
 
 func (r *mutationResolver) DeleteUser(ctx context.Context, userID string) (*model.User, error) {
@@ -67,8 +66,7 @@ func (r *mutationResolver) UpdatePostCommentsAllowance(ctx context.Context, post
 }
 
 func (r *mutationResolver) UpdateCommentBody(ctx context.Context, commentID string, body string) (*model.Comment, error) {
-	//TODO implement me
-	panic("implement me")
+	return r.cs.UpdateCommentBody(commentID, body, ctx)
 }
 
 // ListPosts is the resolver for the listPosts field.

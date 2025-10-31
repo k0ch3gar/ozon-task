@@ -83,3 +83,32 @@ func (cs *CommentService) CreateComment(commentInput model.CommentInput, ctx con
 
 	return utils.FromStorageComment(comment), nil
 }
+
+func (cs *CommentService) GetCommentById(commentId string, ctx context.Context) (*model.Comment, error) {
+	comment, err := cs.c.GetCommentById(commentId, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.FromStorageComment(comment), nil
+}
+
+func (cs *CommentService) UpdateCommentBody(commentId string, body string, ctx context.Context) (*model.Comment, error) {
+	comment, err := cs.c.GetCommentById(commentId, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	comment.Body = body
+	err = cs.c.UpdateComment(comment, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.FromStorageComment(comment), nil
+}
+
+func (cs *CommentService) DeleteComment(commentId string, ctx context.Context) (*string, error) {
+	err := cs.c.DeleteComment(commentId, ctx)
+	return &commentId, err
+}
