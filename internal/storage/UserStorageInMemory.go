@@ -114,6 +114,10 @@ func (us *UserStorageInMemory) ContainsByUsername(username string, ctx context.C
 	defer uss.mu.Unlock()
 
 	_, ok := uss.data[username]
+	if !ok {
+		return false, nil
+	}
+
 	if err = us.ValidateUserExistence(uss.data[username]); err != nil {
 		return false, err
 	}
@@ -192,10 +196,10 @@ func (us *UserStorageInMemory) ValidateUserExistence(user *model.User) error {
 	return nil
 }
 
-func (us *UserStorageInMemory) DeleteUser(userId string, ctx context.Context) error {
+func (us *UserStorageInMemory) DeleteUser(userId string, ctx context.Context) (*model.User, error) {
 	idx, err := getStorageShardIdx(us.idShards, us.shardCount, userId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	uss := us.idShards[idx]
@@ -204,11 +208,11 @@ func (us *UserStorageInMemory) DeleteUser(userId string, ctx context.Context) er
 
 	_, ok := uss.data[userId]
 	if !ok {
-		return errors.New(fmt.Sprintf("no such user with id: %s", userId))
+		return nil, errors.New(fmt.Sprintf("no such user with id: %s", userId))
 	}
 
 	if uss.data[userId].DeletedAt != nil {
-		return errors.New(fmt.Sprintf("user with this id is already deleted: %s", userId))
+		return nil, errors.New(fmt.Sprintf("user with this id is already deleted: %s", userId))
 	}
 
 	deletionTime := time.Now().Format(time.RFC3339)
@@ -216,7 +220,7 @@ func (us *UserStorageInMemory) DeleteUser(userId string, ctx context.Context) er
 
 	idx, err = getStorageShardIdx(us.usernameShard, us.shardCount, uss.data[userId].Username)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	usn := us.usernameShard[idx]
@@ -225,9 +229,9 @@ func (us *UserStorageInMemory) DeleteUser(userId string, ctx context.Context) er
 
 	_, ok = usn.data[uss.data[userId].Username]
 	if !ok {
-		return errors.New(fmt.Sprintf("no such user with username: %s", uss.data[userId].Username))
+		return nil, errors.New(fmt.Sprintf("no such user with username: %s", uss.data[userId].Username))
 	}
 
 	usn.data[uss.data[userId].Username].DeletedAt = &deletionTime
-	return nil
+	return uss.data[userId], nil
 }

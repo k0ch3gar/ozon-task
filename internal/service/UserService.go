@@ -47,10 +47,10 @@ func (us *UserService) GetUserByName(ctx context.Context, username string) (*mod
 }
 
 func (us *UserService) DeleteUser(ctx context.Context, userId string) (*model.User, error) {
-	err := us.us.DeleteUser(userId, ctx)
+	user, err := us.us.DeleteUser(userId, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return us.GetUserById(ctx, userId)
+	return utils.FromStorageUser(user), err
 }

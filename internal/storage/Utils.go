@@ -66,13 +66,13 @@ func updateData(db *pg.DB, data interface{}, ctx context.Context) error {
 	return err
 }
 
-func deleteDataById(db *pg.DB, data interface{}, ctx context.Context) error {
+func deleteData(db *pg.DB, data interface{}, ctx context.Context) error {
 	query, err := buildQuery(db, data, ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = query.Delete()
+	_, err = query.Set("deleted_at = NOW()").WherePK().Update()
 	return err
 }
 

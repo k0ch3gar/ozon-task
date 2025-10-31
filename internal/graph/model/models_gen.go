@@ -37,7 +37,6 @@ type Post struct {
 	Title         string    `json:"title"`
 	Body          string    `json:"body"`
 	AllowComments bool      `json:"allowComments"`
-	CommentsID    []*string `json:"commentsId,omitempty"`
 	CreatedAt     string    `json:"createdAt"`
 	Deleted       bool      `json:"deleted"`
 }

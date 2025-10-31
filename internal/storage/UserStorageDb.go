@@ -57,7 +57,7 @@ func (u *UserStorageDb) ContainsById(userId string, ctx context.Context) (bool, 
 	user := &model.User{
 		ID: userId,
 	}
-	if err := getDataByUniqueColumn(u.db, user, "username", user.Username, ctx); err != nil {
+	if err := getDataById(u.db, user, ctx); err != nil {
 		if errors.Is(err, pg.ErrNoRows) {
 			return false, nil
 		} else {
@@ -107,9 +107,20 @@ func (u *UserStorageDb) UpdateUser(newUser *model.User, ctx context.Context) err
 	return updateData(u.db, newUser, ctx)
 }
 
-func (u *UserStorageDb) DeleteUser(userId string, ctx context.Context) error {
+func (u *UserStorageDb) DeleteUser(userId string, ctx context.Context) (*model.User, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
-	return deleteDataById(u.db, userId, ctx)
+	user := &model.User{
+		ID: userId,
+	}
+	if err := getDataById(u.db, user, ctx); err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, errors.New("no such user")
+		} else {
+			return nil, err
+		}
+	}
+
+	return user, deleteData(u.db, user, ctx)
 }

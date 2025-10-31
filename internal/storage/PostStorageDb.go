@@ -72,8 +72,13 @@ func (p *PostStorageDb) UpdatePost(newPost *model.Post, ctx context.Context) err
 }
 
 func (p *PostStorageDb) DeletePost(postId string, ctx context.Context) error {
+	post, err := p.GetPostById(postId, ctx)
+	if err != nil {
+		return err
+	}
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	return deleteDataById(p.db, postId, ctx)
+	return deleteData(p.db, post, ctx)
 }

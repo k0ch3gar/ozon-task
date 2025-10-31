@@ -69,8 +69,9 @@ func FromApiPost(post *model2.Post) *model.Post {
 
 func FromPostInput(postInput *model2.PostInput) *model.Post {
 	return &model.Post{
-		Title:    postInput.Title,
-		Body:     postInput.Body,
-		AuthorID: &postInput.AuthorID,
+		Title:         postInput.Title,
+		Body:          postInput.Body,
+		AuthorID:      &postInput.AuthorID,
+		AllowComments: true,
 	}
 }

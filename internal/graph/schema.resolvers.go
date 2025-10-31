@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/k0ch3gar/ozon-task/internal/graph/model"
 )
@@ -39,6 +40,8 @@ func (r *mutationResolver) DeleteComment(ctx context.Context, commentID string) 
 }
 
 func (r *mutationResolver) DeleteUser(ctx context.Context, userID string) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
 	return r.us.DeleteUser(ctx, userID)
 }
 
@@ -65,6 +68,8 @@ func (r *mutationResolver) UpdateCommentBody(ctx context.Context, commentID stri
 
 // ListPosts is the resolver for the listPosts field.
 func (r *queryResolver) ListPosts(ctx context.Context, page int32) ([]*model.Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
 	post, err := r.ps.GetPostsByPage(uint64(page), ctx)
 	return post, err
 }

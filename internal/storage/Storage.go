@@ -17,7 +17,7 @@ type UserStorage interface {
 	GetUserById(userId string, ctx context.Context) (*model.User, error)
 	InsertUser(user *model.User, ctx context.Context) error
 	UpdateUser(newUser *model.User, ctx context.Context) error
-	DeleteUser(userId string, ctx context.Context) error
+	DeleteUser(userId string, ctx context.Context) (*model.User, error)
 	ContainsByUsername(username string, ctx context.Context) (bool, error)
 	ContainsById(userId string, ctx context.Context) (bool, error)
 	GetUserByName(username string, ctx context.Context) (*model.User, error)
