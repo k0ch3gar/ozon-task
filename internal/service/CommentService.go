@@ -13,23 +13,35 @@ import (
 
 type CommentService struct {
 	u        storage.UserStorage
+	p        storage.PostStorage
 	c        storage.CommentStorage
 	pageSize uint64
 }
 
 func NewCommentService(
 	u storage.UserStorage,
+	p storage.PostStorage,
 	c storage.CommentStorage,
 	params config.ApplicationParameters,
 ) *CommentService {
 	return &CommentService{
 		u:        u,
 		c:        c,
+		p:        p,
 		pageSize: params.PageSize,
 	}
 }
 
 func (cs *CommentService) GetPostCommentsByPage(postId string, page uint64, ctx context.Context) ([]*model.Comment, error) {
+	post, err := cs.p.GetPostById(postId, ctx)
+	if err != nil {
+		return nil, errors.New("no such post")
+	}
+
+	if !post.AllowComments {
+		return nil, errors.New("comments are not allowed")
+	}
+
 	comments, err := cs.c.GetFirstCommentsByPost(postId, page*cs.pageSize, cs.pageSize, ctx)
 	if err != nil {
 		return nil, err
@@ -48,6 +60,20 @@ func (cs *CommentService) GetPostCommentsByPage(postId string, page uint64, ctx 
 }
 
 func (cs *CommentService) GetChildCommentsByPage(commentId string, page uint64, ctx context.Context) ([]*model.Comment, error) {
+	comment, err := cs.GetCommentById(commentId, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	post, err := cs.p.GetPostById(comment.ParentPostID, ctx)
+	if err != nil {
+		return nil, errors.New("no such post")
+	}
+
+	if !post.AllowComments {
+		return nil, errors.New("comments are not allowed")
+	}
+
 	comments, err := cs.c.GetFirstCommentsByComment(commentId, page*cs.pageSize, cs.pageSize, ctx)
 	if err != nil {
 		return nil, err
@@ -66,6 +92,15 @@ func (cs *CommentService) GetChildCommentsByPage(commentId string, page uint64, 
 }
 
 func (cs *CommentService) CreateComment(commentInput model.CommentInput, ctx context.Context) (*model.Comment, error) {
+	post, err := cs.p.GetPostById(commentInput.ParentPostID, ctx)
+	if err != nil {
+		return nil, errors.New("no such post")
+	}
+
+	if !post.AllowComments {
+		return nil, errors.New("comments are not allowed")
+	}
+
 	comment := utils.FromCommentInput(&commentInput)
 	if ok, err := cs.u.ContainsById(*comment.AuthorID, ctx); err != nil {
 		return nil, err
@@ -73,7 +108,7 @@ func (cs *CommentService) CreateComment(commentInput model.CommentInput, ctx con
 		return nil, errors.New(fmt.Sprintf("author does not exists: %s", *comment.AuthorID))
 	}
 
-	err := cs.c.InsertComment(comment, ctx)
+	err = cs.c.InsertComment(comment, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +122,15 @@ func (cs *CommentService) GetCommentById(commentId string, ctx context.Context) 
 		return nil, err
 	}
 
+	post, err := cs.p.GetPostById(comment.ParentPostID, ctx)
+	if err != nil {
+		return nil, errors.New("no such post")
+	}
+
+	if !post.AllowComments {
+		return nil, errors.New("comments are not allowed")
+	}
+
 	return utils.FromStorageComment(comment), nil
 }
 
@@ -94,6 +138,15 @@ func (cs *CommentService) UpdateCommentBody(commentId string, body string, ctx c
 	comment, err := cs.c.GetCommentById(commentId, ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	post, err := cs.p.GetPostById(comment.ParentPostID, ctx)
+	if err != nil {
+		return nil, errors.New("no such post")
+	}
+
+	if !post.AllowComments {
+		return nil, errors.New("comments are not allowed")
 	}
 
 	comment.Body = body
@@ -106,6 +159,20 @@ func (cs *CommentService) UpdateCommentBody(commentId string, body string, ctx c
 }
 
 func (cs *CommentService) DeleteComment(commentId string, ctx context.Context) (*string, error) {
-	err := cs.c.DeleteComment(commentId, ctx)
+	comment, err := cs.c.GetCommentById(commentId, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	post, err := cs.p.GetPostById(comment.ParentPostID, ctx)
+	if err != nil {
+		return nil, errors.New("no such post")
+	}
+
+	if !post.AllowComments {
+		return nil, errors.New("comments are not allowed")
+	}
+
+	err = cs.c.DeleteComment(commentId, ctx)
 	return &commentId, err
 }
